@@ -1,0 +1,23 @@
+# nginx context: http
+http {
+    # nginx directive: upstream
+    upstream uwsgi_app_server_graphite_web {
+        server unix:/var/run/uwsgi/graphite-web.sock
+    }
+
+    # nginx context: server
+    server {
+        listen      80;
+        server_name _;
+        charset     utf-8;
+
+        location /static/ {
+            alias /usr/share/graphite-web/static/; # graphite-web's static files
+        }
+
+        location / {
+            include    uwsgi_params;
+            uwsgi_pass uwsgi_app_server_graphite_web;
+        }
+    }
+}

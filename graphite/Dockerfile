@@ -2,7 +2,8 @@
 # [1] memcached
 # [2] postgresql
 # [3] carbon-cache
-# [4] nginx
+# [4] uwsgi
+# [5] nginx
 
 FROM debian:jessie
 MAINTAINER ranjanashish
@@ -16,10 +17,10 @@ RUN apt-get -y upgrade
 RUN apt-get -y install procps sudo
 
 # pre-configure packages
-RUN echo graphite-carbon graphite-carbon/postrm_remove_databases boolean false | debconf-set-selections
+RUN echo 'graphite-carbon graphite-carbon/postrm_remove_databases boolean false' | debconf-set-selections
 
 # install packages
-RUN apt-get -y install graphite-carbon graphite-web memcached python-memcache nginx postgresql libpq-dev python-psycopg2
+RUN apt-get -y install graphite-carbon graphite-web memcached python-memcache nginx-light uwsgi postgresql libpq-dev python-psycopg2
 
 # postgres
 RUN service postgresql start
@@ -27,7 +28,8 @@ RUN sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';"
 RUN sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;"
 
 # graphite-carbon
-RUN sed -i 's/CARBON_CACHE_ENABLED=false/CARBON_CACHE_ENABLED=true/' /etc/default/graphite-carbon
+RUN sed -i 's/^\(CARBON_CACHE_ENABLED=\)false/\1true/' /etc/default/graphite-carbon
+RUN sed -i 's/^\(ENABLE_LOGROTATION\s*=\s*\)False/\1True/' /etc/carbon/carbon.conf
 
 # graphite-web
 RUN sed -i "s/^#\(SECRET_KEY\s*=\s*'\)[^']*\('\)/\1$(< /dev/urandom tr -dc 'a-zA-Z0-9!#%^*()_+' | head -c 50)\2/" /etc/graphite/local_settings.py
@@ -39,6 +41,10 @@ RUN sed -i "s/^\(\s*'USER':\s*'\)[^']*\(',\)/\1graphite\2/" /etc/graphite/local_
 RUN sed -i "s/^\(\s*'PASSWORD':\s*'\)[^']*\(',\)/\1password\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'HOST':\s*'\)[^']*\(',\)/\1127.0.0.1\2/" /etc/graphite/local_settings.py
 RUN graphite-manage syncdb --noinput
+
+# uwsgi
+ADD graphite_web_uwsgi.ini /usr/share/uwsgi/conf/
+RUN sed -i 's/^\(INHERITED_CONFIG=\/usr\/share\/uwsgi\/conf\/\)default.ini/\1graphite_web_uwsgi.ini/' /etc/default/uwsgi
 
 # nginx
 ADD graphite-web /etc/nginx/sites-available/
