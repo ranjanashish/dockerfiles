@@ -8,6 +8,8 @@
 FROM debian:jessie
 MAINTAINER ranjanashish
 
+ENV DEBIAN_FRONTEND noninteractive
+
 # upgrade
 RUN apt-get update
 RUN apt-get -y install apt-utils dialog
@@ -23,9 +25,7 @@ RUN echo 'graphite-carbon graphite-carbon/postrm_remove_databases boolean false'
 RUN apt-get -y install graphite-carbon graphite-web memcached python-memcache nginx-light uwsgi postgresql libpq-dev python-psycopg2
 
 # postgres
-RUN service postgresql start
-RUN sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';"
-RUN sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;"
+RUN service postgresql start; sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';"; sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;"
 
 # graphite-carbon
 RUN sed -i 's/^\(CARBON_CACHE_ENABLED=\)false/\1true/' /etc/default/graphite-carbon
@@ -40,7 +40,7 @@ RUN sed -i "s/^\(\s*'ENGINE':\s*'django.db.backends.\)[^']*\(',\)/\1postgresql_p
 RUN sed -i "s/^\(\s*'USER':\s*'\)[^']*\(',\)/\1graphite\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'PASSWORD':\s*'\)[^']*\(',\)/\1password\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'HOST':\s*'\)[^']*\(',\)/\1127.0.0.1\2/" /etc/graphite/local_settings.py
-RUN graphite-manage syncdb --noinput
+RUN service postgresql start; graphite-manage syncdb --noinput
 
 # uwsgi
 ADD graphite_web_uwsgi.ini /usr/share/uwsgi/conf/
