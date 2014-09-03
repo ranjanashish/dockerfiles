@@ -1,31 +1,31 @@
 # Applications:
-# [1] memcached
-# [2] postgresql
-# [3] carbon-cache
-# [4] uwsgi
-# [5] nginx
+# [1] supervisord
+# [2] memcached
+# [3] postgresql
+# [4] carbon-cache
+# [5] uwsgi
+# [6] nginx
 
 FROM debian:jessie
 MAINTAINER ranjanashish
 
-ENV DEBIAN_FRONTEND noninteractive
+# debconf frontend: noninteractive
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 # upgrade
-RUN apt-get update
-RUN apt-get -y install apt-utils dialog
-RUN apt-get -y upgrade
+RUN apt-get update && apt-get -y upgrade
 
 # install essential packages
-RUN apt-get -y install procps sudo
+RUN apt-get -y install apt-utils dialog procps sudo
 
 # pre-configure packages
 RUN echo 'graphite-carbon graphite-carbon/postrm_remove_databases boolean false' | debconf-set-selections
 
 # install packages
-RUN apt-get -y install graphite-carbon graphite-web memcached python-memcache nginx-light uwsgi postgresql libpq-dev python-psycopg2
+RUN apt-get -y install graphite-carbon graphite-web memcached python-memcache nginx-full uwsgi uwsgi-plugin-python postgresql libpq-dev python-psycopg2 supervisor
 
 # postgres
-RUN service postgresql start; sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';"; sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;"
+RUN service postgresql start && sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';" && sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;"
 
 # graphite-carbon
 RUN sed -i 's/^\(CARBON_CACHE_ENABLED=\)false/\1true/' /etc/default/graphite-carbon
@@ -40,16 +40,21 @@ RUN sed -i "s/^\(\s*'ENGINE':\s*'django.db.backends.\)[^']*\(',\)/\1postgresql_p
 RUN sed -i "s/^\(\s*'USER':\s*'\)[^']*\(',\)/\1graphite\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'PASSWORD':\s*'\)[^']*\(',\)/\1password\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'HOST':\s*'\)[^']*\(',\)/\1127.0.0.1\2/" /etc/graphite/local_settings.py
-RUN service postgresql start; graphite-manage syncdb --noinput
+RUN service postgresql start && graphite-manage syncdb --noinput
+RUN chown -R www-data:www-data /var/log/graphite
 
-# uwsgi
-ADD graphite_web_uwsgi.ini /usr/share/uwsgi/conf/
-RUN sed -i 's/^\(INHERITED_CONFIG=\/usr\/share\/uwsgi\/conf\/\)default.ini/\1graphite_web_uwsgi.ini/' /etc/default/uwsgi
+# uwsgi: application server
+RUN rm -f /etc/uwsgi/apps-enabled/*
+ADD files/graphite_web_uwsgi.ini /etc/uwsgi/apps-available/
+RUN ln -sf /etc/uwsgi/apps-available/graphite_web_uwsgi.ini /etc/uwsgi/apps-enabled/graphite_web_uwsgi.ini
 
-# nginx
-ADD graphite-web /etc/nginx/sites-available/
-RUN rm -f /etc/nginx/sites-enabled/default
-RUN ln -sf /etc/nginx/sites-available/graphite-web /etc/nginx/sites-enabled/graphite-web
+# nginx: web server
+RUN rm -f /etc/nginx/sites-enabled/*
+ADD files/graphite_web_nginx.conf /etc/nginx/sites-available/
+RUN ln -sf /etc/nginx/sites-available/graphite_web_nginx.conf /etc/nginx/sites-enabled/graphite_web_nginx.conf
+
+# supervisord
+ADD files/supervisord.conf /etc/supervisor/conf.d/
 
 # mount volumes
 VOLUME /var/lib/graphite
@@ -60,3 +65,10 @@ EXPOSE 2003 2004 7002
 
 # clean
 RUN apt-get -y clean
+
+# debconf frontend: dialog
+RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections    
+
+# supervisor
+CMD ["/usr/bin/supervisord"]
+
