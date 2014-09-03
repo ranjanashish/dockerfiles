@@ -42,6 +42,7 @@ RUN sed -i "s/^\(\s*'PASSWORD':\s*'\)[^']*\(',\)/\1password\2/" /etc/graphite/lo
 RUN sed -i "s/^\(\s*'HOST':\s*'\)[^']*\(',\)/\1127.0.0.1\2/" /etc/graphite/local_settings.py
 RUN service postgresql start && graphite-manage syncdb --noinput
 RUN chown -R www-data:www-data /var/log/graphite
+RUN touch /var/lib/graphite/search_index && chown www-data:www-data /var/lib/graphite/search_index
 
 # uwsgi: application server
 RUN rm -f /etc/uwsgi/apps-enabled/*
