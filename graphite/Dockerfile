@@ -69,11 +69,9 @@ ADD files/graphite_web_nginx.conf /etc/nginx/sites-available/
 RUN ln -sf /etc/nginx/sites-available/graphite_web_nginx.conf /etc/nginx/sites-enabled/graphite_web_nginx.conf
 RUN echo 'daemon off;' >> /etc/nginx/nginx.conf
 
-# supervisord
+# supervisor
+ADD files/supervisord_event_listener.py /root/supervisord_event_listener.py
 ADD files/supervisord.conf /etc/supervisor/conf.d/
-
-# main run script
-ADD files/run.sh /root/run.sh
 
 # mount volumes
 VOLUME /var/lib/graphite
@@ -83,8 +81,8 @@ EXPOSE 80
 EXPOSE 2003 2004 7002
 
 # debconf frontend: dialog
-RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections    
+RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
 
-# supervisor
-CMD ["/root/run.sh"]
+# default command
+CMD ["service", "supervisor", "start"]
 
