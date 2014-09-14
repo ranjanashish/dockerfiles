@@ -53,6 +53,7 @@ RUN ln -sf /etc/uwsgi/apps-available/graphite_web_uwsgi.ini /etc/uwsgi/apps-enab
 RUN rm -f /etc/nginx/sites-enabled/*
 ADD files/graphite_web_nginx.conf /etc/nginx/sites-available/
 RUN ln -sf /etc/nginx/sites-available/graphite_web_nginx.conf /etc/nginx/sites-enabled/graphite_web_nginx.conf
+RUN echo 'daemon off;' >> /etc/nginx/nginx.conf
 
 # supervisord
 ADD files/supervisord.conf /etc/supervisor/conf.d/
