@@ -6,6 +6,8 @@
 # [5] uwsgi
 # [6] nginx
 
+# Note: The official Debian images automatically ``apt-get clean`` after each ``apt-get``
+
 FROM debian:jessie
 MAINTAINER ranjanashish
 
@@ -22,10 +24,20 @@ RUN apt-get -y install apt-utils dialog procps sudo
 RUN echo 'graphite-carbon graphite-carbon/postrm_remove_databases boolean false' | debconf-set-selections
 
 # install packages
-RUN apt-get -y install graphite-carbon graphite-web memcached python-memcache nginx-full uwsgi uwsgi-plugin-python postgresql libpq-dev python-psycopg2 supervisor
+RUN apt-get -y install \
+    graphite-carbon graphite-web \
+    memcached python-memcache \
+    nginx-full \
+    uwsgi uwsgi-plugin-python \
+    postgresql-9.4 postgresql-client-9.4 postgresql-contrib-9.4 libpq-dev python-psycopg2 \
+    cron \
+    supervisor
 
 # postgres
-RUN service postgresql start && sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';" && sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;"
+RUN service postgresql start && \
+    sudo -u postgres psql -c "CREATE USER graphite WITH PASSWORD 'password';" && \
+    sudo -u postgres psql -c "CREATE DATABASE graphite WITH OWNER graphite;" && \
+    service postgresql stop
 
 # graphite-carbon
 RUN sed -i 's/^\(CARBON_CACHE_ENABLED=\)false/\1true/' /etc/default/graphite-carbon
@@ -40,7 +52,9 @@ RUN sed -i "s/^\(\s*'ENGINE':\s*'django.db.backends.\)[^']*\(',\)/\1postgresql_p
 RUN sed -i "s/^\(\s*'USER':\s*'\)[^']*\(',\)/\1graphite\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'PASSWORD':\s*'\)[^']*\(',\)/\1password\2/" /etc/graphite/local_settings.py
 RUN sed -i "s/^\(\s*'HOST':\s*'\)[^']*\(',\)/\1127.0.0.1\2/" /etc/graphite/local_settings.py
-RUN service postgresql start && graphite-manage syncdb --noinput
+RUN service postgresql start && \
+    graphite-manage syncdb --noinput && \
+    service postgresql stop
 RUN chown -R www-data:www-data /var/log/graphite
 RUN touch /var/lib/graphite/search_index && chown www-data:www-data /var/lib/graphite/search_index
 
@@ -58,6 +72,9 @@ RUN echo 'daemon off;' >> /etc/nginx/nginx.conf
 # supervisord
 ADD files/supervisord.conf /etc/supervisor/conf.d/
 
+# main run script
+ADD files/run.sh /root/run.sh
+
 # mount volumes
 VOLUME /var/lib/graphite
 
@@ -65,12 +82,9 @@ VOLUME /var/lib/graphite
 EXPOSE 80
 EXPOSE 2003 2004 7002
 
-# clean
-RUN apt-get -y clean
-
 # debconf frontend: dialog
 RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections    
 
 # supervisor
-CMD ["/usr/bin/supervisord"]
+CMD ["/root/run.sh"]
 
