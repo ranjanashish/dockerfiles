@@ -46,7 +46,7 @@ LOG_METRIC_ACCESS = True
 # You should not use the loopback address (127.0.0.1) here if using clustering
 # as every webapp in the cluster should use the exact same values to prevent
 # unneeded cache misses. Set to [] to disable caching of images and fetched data
-MEMCACHE_HOSTS = ['127.0.0.1:11211']
+MEMCACHE_HOSTS = ['memcached:11211']
 #DEFAULT_CACHE_DURATION = 60 # Cache images and data for 1 minute
 
 

@@ -9,7 +9,7 @@ MAINTAINER ranjanashish
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 # install packages
-RUN apt-get update && apt-get -y install nginx-full supervisor wget 
+RUN apt-get update && apt-get -y install nginx-full supervisor wget
 
 # install grafana
 RUN wget -P /tmp http://grafanarel.s3.amazonaws.com/grafana-1.8.1.tar.gz && \
@@ -33,7 +33,7 @@ ADD files/supervisord.conf /etc/supervisor/conf.d/
 EXPOSE 80
 
 # debconf frontend: dialog
-RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections    
+RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
 
 # default command
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["service", "supervisor", "start"]

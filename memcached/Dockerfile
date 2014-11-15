@@ -18,7 +18,7 @@ ADD files/supervisord.conf /etc/supervisor/conf.d/
 EXPOSE 11211
 
 # debconf frontend: dialog
-RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections    
+RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
 
 # default command
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["service", "supervisor", "start"]

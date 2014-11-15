@@ -55,7 +55,7 @@ ADD files/supervisord_event_listener.py /root/supervisord_event_listener.py
 ADD files/supervisord.conf /etc/supervisor/conf.d/
 
 # ports
-EXPOSE 80
+EXPOSE 8080
 
 # debconf frontend: dialog
 RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
