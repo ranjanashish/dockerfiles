@@ -24,7 +24,7 @@ ADD files/storage-aggregation.conf /etc/carbon/
 ADD files/supervisord.conf /etc/supervisor/conf.d/
 
 # data volumes
-VOLUME ["/var/lib/graphite"]
+VOLUME ["/var/lib/graphite/whisper"]
 
 # ports
 EXPOSE 2003 2004 7002
