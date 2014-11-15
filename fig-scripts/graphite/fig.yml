@@ -1,0 +1,29 @@
+graphitecarbon:
+  image: ranjanashish/graphite-carbon
+  ports:
+    - "2003:2003"
+    - "2004:2004"
+    - "7002:7002"
+
+memcached:
+  image: ranjanashish/memcached
+
+graphiteweb:
+  image: ranjanashish/graphite-web
+  links:
+    - memcached:memcached
+  ports:
+    - "8080:8080"
+  volumes_from:
+    - graphitecarbon
+
+elasticsearch:
+  image: ranjanashish/elasticsearch
+
+grafana:
+  image: ranjanashish/grafana
+  links:
+    - elasticsearch:elasticsearch
+    - graphiteweb:graphiteweb
+  ports:
+    - "80:80"

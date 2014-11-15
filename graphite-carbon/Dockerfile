@@ -33,4 +33,4 @@ EXPOSE 2003 2004 7002
 RUN echo 'debconf debconf/frontend select Dialog' | debconf-set-selections
 
 # default command
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["service", "supervisor", "start"]

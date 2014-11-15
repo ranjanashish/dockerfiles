@@ -40,11 +40,11 @@ function (Settings) {
     datasources: {
       graphite: {
         type: 'graphite',
-        url: "http://localhost:8080",
+        url: "http://graphiteweb:8080",
       },
       elasticsearch: {
         type: 'elasticsearch',
-        url: "http://localhost:9200",
+        url: "http://elasticsearch:9200",
         index: 'grafana-dash',
         grafanaDB: true,
       }
