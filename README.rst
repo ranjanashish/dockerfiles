@@ -26,18 +26,28 @@ List of fig scripts
 Getting started (Debian-based distros)
 --------------------------------------
 1. Install docker:
+
    ``$ sudo apt-get install docker.io``
+
 2. Add yourself to docker group (you will need to log-out and then log-in again for this to take effect; restart is not required):
+
    ``$ sudo usermod -a -G docker $USER``
+
 3. Install fig:
+
    ``$ sudo apt-get install fig``
+
 4. Clone the repository:
+
    ``$ git clone https://github.com/ranjanashish/dockerfiles ~/dockerfiles``
 
 Graphite stack setup
 --------------------
 1. Navigate to fig-scripts directory of graphite
+
    ``$ cd ~/dockerfiles/fig-scripts/graphite``
+
 2. Run fig
+
    ``$ fig up -d``
 
